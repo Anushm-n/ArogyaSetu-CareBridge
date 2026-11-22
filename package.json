@@ -1,0 +1,16 @@
+{
+  "name": "arogyasetu-carebridge-fullstack",
+  "version": "1.0.0",
+  "description": "Multilingual Healthcare, Medication Adherence & Emergency Network with Full-Stack Backend & Role-Based Auth",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node scripts/migrate-json-to-mysql.js",
+    "migrate:runtime": "node scripts/migrate-runtime.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.10",
+    "mysql2": "^3.24.6"
+  }
+}

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArogyaSetu (CareBridge) — Multilingual Healthcare & Emergency Ecosystem</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="auth-pending">
+
+  <div class="demo-bar">
+    <div>
+      <strong>Logged in as:</strong> <span id="session-user-badge">Ramesh Kumar (PATIENT)</span>
+      <span id="api-sync-status" style="margin-left:8px; font-size:0.78rem; color:#34d399;">● Backend Synced</span>
+    </div>
+    <div class="demo-bar-actions">
+      <button id="demo-reminder-btn" class="demo-btn" onclick="triggerDueReminder()">⏰ Trigger Medicine Time Alert</button>
+      <button id="demo-skip-btn" class="demo-btn warn" onclick="simulateSkippedDose()">⚠️ Simulate Skipped Dose (Notify Caretaker)</button>
+      <button id="demo-reset-btn" class="demo-btn reset" onclick="resetDemoState()">↺ Reset Demo</button>
+      <button class="demo-btn" style="background:#dc2626; border-color:#b91c1c;" onclick="logoutSession()">⎋ Logout</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">+</div>
+        <div>
+          <h1 id="ui-app-title">ArogyaSetu • CareBridge</h1>
+          <p id="ui-app-subtitle">Multilingual Healthcare, Medication Adherence &amp; Emergency Network</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button class="tts-btn" onclick="speakPageSummary()" title="Read screen aloud">🔊 <span id="ui-listen-btn">Listen</span></button>
+        <select id="lang-select" class="lang-select" onchange="changeLanguage(this.value)" aria-label="Select Language">
+          <option value="en">English</option>
+          <option value="kn">ಕನ್ನಡ (Kannada)</option>
+          <option value="hi">हिन्दी (Hindi)</option>
+          <option value="ta">தமிழ் (Tamil)</option>
+          <option value="te">తెలుగు (Telugu)</option>
+        </select>
+        <button class="sos-btn" onclick="triggerSOS()">🚨 <span id="ui-sos-btn">SOS PANIC</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="role-nav-wrap">
+    <div class="role-tabs" role="tablist">
+      <button class="role-tab active" data-role="patient" onclick="switchRole('patient')">🧑 <span data-i18n="role_patient">Patient</span></button>
+      <button class="role-tab" data-role="caretaker" onclick="switchRole('caretaker')">🤝 <span data-i18n="role_caretaker">Caretaker</span> <span id="caretaker-badge" class="badge" style="display:none;">0</span></button>
+      <button class="role-tab" data-role="doctor" onclick="switchRole('doctor')">🩺 <span data-i18n="role_doctor">Doctor</span></button>
+      <button class="role-tab" data-role="nurse" onclick="switchRole('nurse')">💉 <span data-i18n="role_nurse">Nurse</span> <span id="nurse-badge" class="badge" style="display:none;">0</span></button>
+      <button class="role-tab" data-role="hospital" onclick="switchRole('hospital')">🏥 <span data-i18n="role_hospital">Hospital</span></button>
+      <button class="role-tab" data-role="admin" onclick="switchRole('admin')">⚙️ <span data-i18n="role_admin">Administrator</span></button>
+      <button class="role-tab" data-role="volunteer" onclick="switchRole('volunteer')">🚑 <span data-i18n="role_volunteer">Volunteer</span></button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="sos-banner" class="sos-banner">
+      <div>
+        <strong style="font-size:1.1rem;">🚨 EMERGENCY SOS ACTIVE — BROADCASTED TO HOSPITAL, DOCTOR, NURSE, CARETAKER &amp; VOLUNTEERS</strong>
+        <p id="sos-details" style="margin-top:4px; font-size:0.92rem;"></p>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-sm" style="background:#7f1d1d; color:#fff;" onclick="speakText('Emergency SOS activated. Ambulance and nearby volunteers have been dispatched to your GPS location.')">🔊 Read Alert</button>
+        <button class="btn btn-outline btn-sm" onclick="resolveSOS()">✓ Mark Resolved</button>
+      </div>
+    </div>
+
+    <div id="due-banner" class="due-banner">
+      <div>
+        <strong style="font-size:1.05rem;">⏰ <span id="due-title">Time to Take Your Medicine!</span></strong>
+        <p id="due-desc" style="margin-top:2px; font-size:0.95rem;"></p>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-success" onclick="handleDueAction('taken')">✓ <span data-i18n="btn_taken">Take Now</span></button>
+        <button class="btn btn-danger" onclick="handleDueAction('skipped')">✕ <span data-i18n="btn_skip">Skip (Notify Caretaker)</span></button>
+        <button class="tts-btn" onclick="replayDueReminder()" title="Replay medicine reminder">🔊</button>
+      </div>
+    </div>
+
+    <section id="view-patient" class="role-view active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💊 <span data-i18n="med_schedule_title">My Medicine Schedule &amp; Reminders</span></div>
+            <button class="tts-btn" onclick="speakMedicines()">🔊</button>
+          </div>
+
+          <form onsubmit="addMedicine(event)" class="form-row">
+            <input type="text" id="med-name" placeholder="Medicine Name (e.g., Metformin 500mg)" required />
+            <input type="text" id="med-dose" placeholder="Dosage (e.g., 500 mg)" required />
+            <input type="text" id="med-notes" placeholder="Notes (e.g., after breakfast)" />
+            <input type="time" id="med-time" required />
+            <button type="submit" class="btn btn-primary">+ <span data-i18n="btn_add_med">Add Medicine</span></button>
+          </form>
+
+          <div class="reminder-controls">
+            <button type="button" class="btn btn-outline btn-sm" onclick="enableMedicineReminders()" data-i18n="enable_reminders">Enable browser reminders &amp; voice</button>
+            <span id="reminder-status" role="status" aria-live="polite" data-i18n="reminder_open_tab">Keep this dashboard open for scheduled reminders.</span>
+          </div>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;" data-i18n="skip_rule_note">
+            * If a scheduled medicine is skipped or missed, your Caretaker and Nurse are automatically notified.
+          </p>
+
+          <div id="patient-med-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🤖 <span data-i18n="ai_helper_title">AI Basic Health Assistant</span></div>
+            <span style="font-size:0.75rem; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:999px; font-weight:700;" data-i18n="ai_safety_guarded">Safety Guarded</span>
+          </div>
+
+          <div class="quick-chips">
+            <button class="chip" onclick="sendQuickPrompt(currentAITranslations().prompt_headache)">🤕 <span data-i18n="chip_headache">Mild headache</span></button>
+            <button class="chip" onclick="sendQuickPrompt(currentAITranslations().prompt_missed)">💊 <span data-i18n="chip_missed">Missed-dose question</span></button>
+            <button class="chip" onclick="sendQuickPrompt(currentAITranslations().prompt_chest)">🚨 <span data-i18n="chip_chest">Chest pain (urgent)</span></button>
+            <button class="chip" onclick="sendQuickPrompt(currentAITranslations().prompt_breathing)">🫁 <span data-i18n="chip_breathing">Breathing difficulty</span></button>
+          </div>
+
+          <div id="ai-chat-box" class="ai-messages"></div>
+          <p class="ai-disclaimer" data-i18n="ai_disclaimer">This assistant provides general information only and is not a substitute for professional medical advice or diagnosis.</p>
+          <div id="ai-status" class="ai-status" role="status" aria-live="polite"></div>
+
+          <form onsubmit="handleAIChat(event)" class="form-row ai-input-row" style="margin-bottom:0;">
+            <input type="text" id="ai-input" placeholder="Describe symptoms or ask a general health question..." data-i18n-placeholder="ai_input_placeholder" required />
+            <button id="ai-mic-btn" type="button" class="tts-btn" onclick="toggleAIRecognition()" aria-label="Speak your question" title="Speak your question">🎙️</button>
+            <button type="submit" class="btn btn-secondary" data-i18n="btn_ask">Ask AI</button>
+          </form>
+          <button type="button" class="btn btn-outline btn-sm ai-stop-btn" onclick="stopAISpeech()" data-i18n="ai_stop_voice">Stop speech</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-header">
+          <div class="card-title">🪪 <span data-i18n="med_id_title">Digital Emergency Health Card (Auto-shared on SOS)</span></div>
+          <button class="tts-btn" onclick="speakText('Patient Ramesh Kumar, Age 64, Blood Group O Positive, Diabetic and Hypertensive, Allergic to Penicillin.')">🔊</button>
+        </div>
+        <div class="grid-3">
+          <div class="stat-box">
+            <div class="stat-label">Patient &amp; Age</div>
+            <div style="font-weight:800; font-size:1.1rem; margin-top:4px;">Ramesh Kumar (64 Yrs)</div>
+            <div style="font-size:0.82rem; color:var(--muted);">Siddapur, Karnataka • ID: #AS-9042</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Blood Group &amp; Allergies</div>
+            <div style="font-weight:800; font-size:1.1rem; color:var(--danger); margin-top:4px;">O+ Positive • Penicillin Allergy</div>
+            <div style="font-size:0.82rem; color:var(--muted);">Conditions: Type-2 Diabetes, Hypertension</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Primary Caretaker &amp; Doctor</div>
+            <div style="font-weight:800; font-size:1.05rem; margin-top:4px;">Ananya (Daughter) • Dr. S. Hegde</div>
+            <div style="font-size:0.82rem; color:var(--muted);">Emergency Contact: +91 98450-11223</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-caretaker" class="role-view">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔔 Skipped Dose &amp; Caretaker Escalation Alerts</div>
+            <button class="btn btn-outline btn-sm" onclick="clearAlerts()">Acknowledge All</button>
+          </div>
+          <div id="caretaker-alerts-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Live Patient Medication Adherence</div>
+          </div>
+          <div id="caretaker-med-mirror"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-doctor" class="role-view">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🩺 Write e-Prescription (Syncs Directly to Patient App)</div>
+          </div>
+          <form onsubmit="doctorPrescribe(event)">
+            <div class="form-row">
+              <input type="text" id="doc-med-name" placeholder="Prescribe Medicine (e.g., Amlodipine 5mg)" required />
+              <input type="time" id="doc-med-time" required />
+            </div>
+            <div class="form-row">
+              <input type="text" id="doc-med-note" placeholder="Instructions (e.g., Morning with water)" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Send e-Prescription to Patient</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💬 Tele-Consultation &amp; Escalated Critical Cases</div>
+          </div>
+          <div id="doctor-escalations"></div>
+          <div style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:10px; border:1px solid var(--border);">
+            <strong>Patient: Ramesh Kumar (#AS-9042)</strong>
+            <p style="font-size:0.88rem; color:var(--muted); margin:4px 0 10px;">BP: 138/86 mmHg • Fasting Glucose: 124 mg/dL</p>
+            <button class="btn btn-secondary btn-sm" onclick="openTeleModal('Doctor')">📞 Start Video / Voice Consult</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-nurse" class="role-view">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💉 Home-Care Vitals &amp; Dose Follow-Up Tasks</div>
+          </div>
+          <div id="nurse-task-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 Record Patient Vitals</div>
+          </div>
+          <form onsubmit="recordVitals(event)">
+            <div class="form-row">
+              <input type="text" id="vital-bp" placeholder="Blood Pressure (e.g., 128/82)" required />
+              <input type="text" id="vital-sugar" placeholder="Blood Sugar (e.g., 118 mg/dL)" required />
+            </div>
+            <button type="submit" class="btn btn-success">Update Patient Chart</button>
+          </form>
+          <div id="vitals-log" style="margin-top:12px; font-size:0.9rem;"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-hospital" class="role-view">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏥 District General Hospital — Live Emergency &amp; Bed Command</div>
+        </div>
+        <div class="grid-3" style="margin-bottom:16px;">
+          <div class="stat-box">
+            <div class="stat-num">14</div>
+            <div class="stat-label">Available General Beds</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" style="color:var(--warning);">4</div>
+            <div class="stat-label">ICU / Cardiac Beds Ready</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" style="color:var(--success);">3 / 4</div>
+            <div class="stat-label">108 Ambulances On Standby</div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Name</th>
+              <th>Triage Status</th>
+              <th>Assigned Doctor</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="hospital-table-body">
+            <tr>
+              <td>#AS-9042</td>
+              <td>Ramesh Kumar (64M)</td>
+              <td id="hosp-patient-status"><span class="status-pill pill-taken">Stable • Home Monitored</span></td>
+              <td>Dr. S. Hegde (Cardiology)</td>
+              <td><button class="btn btn-primary btn-sm" onclick="alert('Fast-track ER bed reserved for Ramesh Kumar (#AS-9042).')">Reserve ER Bed</button></td>
+            </tr>
+            <tr>
+              <td>#AS-8819</td>
+              <td>Lakshmi Devi (71F)</td>
+              <td><span class="status-pill pill-due">Observation • Ward B</span></td>
+              <td>Dr. P. Nair</td>
+              <td><button class="btn btn-outline btn-sm" onclick="alert('Vitals chart opened.')">View Chart</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="view-admin" class="role-view">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚙️ System Administrator — Registered Entities &amp; Role Governance</div>
+          <a href="login.html" class="btn btn-primary btn-sm">+ Register New Entity</a>
+        </div>
+        <div class="grid-3" style="margin-bottom:16px;">
+          <div class="stat-box">
+            <div class="stat-num" id="admin-user-count">7</div>
+            <div class="stat-label">Registered System Entities</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">94.2%</div>
+            <div class="stat-label">7-Day Medication Adherence</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">5</div>
+            <div class="stat-label">Regional Languages Active</div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Entity ID</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Email Credential</th>
+              <th>Language</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="view-volunteer" class="role-view">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🚑 Community First-Responder &amp; Medicine Delivery Volunteers</div>
+        </div>
+        <div id="volunteer-missions"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="tele-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="card-header">
+        <div class="card-title" id="tele-modal-title">📞 Direct Doctor &amp; Nurse Emergency Connect</div>
+        <button class="btn btn-outline btn-sm" onclick="closeTeleModal()">✕</button>
+      </div>
+      <p style="font-size:0.9rem; color:var(--muted); margin-bottom:12px;">
+        Connected with <strong>Dr. S. Hegde (On-Call Physician)</strong> &amp; <strong>Nurse Kavita</strong>. Patient Medical ID &amp; recent symptom log shared automatically.
+      </p>
+      <div id="tele-chat-log" style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:10px; height:150px; overflow-y:auto; margin-bottom:10px; font-size:0.88rem;">
+        <div><strong>Dr. S. Hegde:</strong> Hello Ramesh, I received your critical symptom alert. Stay seated calmly. Are you experiencing chest tightness right now?</div>
+      </div>
+      <form onsubmit="sendTeleMessage(event)" class="form-row" style="margin-bottom:0;">
+        <input type="text" id="tele-input" placeholder="Type message to doctor/nurse..." required />
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/ai-triage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

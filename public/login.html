@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login • ArogyaSetu (CareBridge) Healthcare Network</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .auth-wrapper {
+      max-width: 640px;
+      margin: 36px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .entity-card {
+      border: 2px solid var(--border);
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+    }
+    .entity-card:hover { border-color: var(--primary); }
+    .entity-card.selected {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+    }
+    .entity-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+    .error-msg {
+      background: var(--danger-light);
+      color: var(--danger-dark);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">+</div>
+        <div>
+          <h1>ArogyaSetu • CareBridge</h1>
+          <p>Unified Role-Based Authentication &amp; Emergency Healthcare Portal</p>
+        </div>
+      </div>
+      <div class="header-controls">
+        <select id="login-lang" class="lang-select" onchange="localStorage.setItem('preferred_lang', this.value)">
+          <option value="en">English</option>
+          <option value="kn">ಕನ್ನಡ (Kannada)</option>
+          <option value="hi">हिन्दी (Hindi)</option>
+          <option value="ta">தமிழ் (Tamil)</option>
+          <option value="te">తెలుగు (Telugu)</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div class="auth-wrapper">
+    <div class="card">
+      <div class="auth-tabs">
+        <button id="tab-login" class="btn btn-primary btn-sm" onclick="toggleAuthMode('login')">🔐 Sign In</button>
+        <button id="tab-register" class="btn btn-outline btn-sm" onclick="toggleAuthMode('register')">📝 Register New Entity</button>
+      </div>
+
+      <label style="display:block; font-weight:700; font-size:0.9rem; margin-bottom:8px;">1. Select Your Entity Role:</label>
+      <div class="role-grid" id="entity-selector">
+        <div class="entity-card selected" data-role="patient" onclick="selectEntity('patient')"><span class="entity-icon">🧑</span>Patient</div>
+        <div class="entity-card" data-role="caretaker" onclick="selectEntity('caretaker')"><span class="entity-icon">🤝</span>Caretaker</div>
+        <div class="entity-card" data-role="doctor" onclick="selectEntity('doctor')"><span class="entity-icon">🩺</span>Doctor</div>
+        <div class="entity-card" data-role="nurse" onclick="selectEntity('nurse')"><span class="entity-icon">💉</span>Nurse</div>
+        <div class="entity-card" data-role="hospital" onclick="selectEntity('hospital')"><span class="entity-icon">🏥</span>Hospital</div>
+        <div class="entity-card" data-role="admin" onclick="selectEntity('admin')"><span class="entity-icon">⚙️</span>Administrator</div>
+        <div class="entity-card" data-role="volunteer" onclick="selectEntity('volunteer')"><span class="entity-icon">🚑</span>Volunteer</div>
+      </div>
+
+      <div id="auth-error" class="error-msg"></div>
+
+      <form id="login-form" onsubmit="submitLogin(event)">
+        <div class="form-row">
+          <input type="email" id="login-email" placeholder="Entity Email ID" autocomplete="username" required />
+        </div>
+        <div class="form-row">
+          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">
+          Sign In to <span id="selected-role-label" style="text-transform:capitalize;">Patient</span> Portal →
+        </button>
+      </form>
+
+      <form id="register-form" onsubmit="submitRegister(event)" style="display:none;">
+        <div class="form-row">
+          <input type="text" id="reg-name" placeholder="Full Name / Hospital Name" required />
+        </div>
+        <div class="form-row">
+          <input type="email" id="reg-email" placeholder="Email Address" required />
+          <input type="tel" id="reg-phone" placeholder="Mobile Number (+91...)" required />
+        </div>
+        <div class="form-row">
+          <input type="password" id="reg-password" placeholder="Create Password" required />
+        </div>
+        <p style="font-size:0.84rem; color:var(--muted); margin-bottom:12px;">
+          Patient, caretaker and volunteer accounts can register here. Clinical and administrator accounts require an authorized administrator.
+        </p>
+        <button type="submit" class="btn btn-success" style="width:100%; justify-content:center; padding:12px;">
+          Create Account &amp; Enter Portal →
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    let selectedRole = "patient";
+
+    function selectEntity(role) {
+      selectedRole = role;
+      document.querySelectorAll(".entity-card").forEach(card => {
+        card.classList.toggle("selected", card.getAttribute("data-role") === role);
+      });
+      document.getElementById("selected-role-label").textContent = role;
+    }
+
+    function toggleAuthMode(mode) {
+      document.getElementById("auth-error").style.display = "none";
+      if (mode === "login") {
+        document.getElementById("login-form").style.display = "block";
+        document.getElementById("register-form").style.display = "none";
+        document.getElementById("tab-login").className = "btn btn-primary btn-sm";
+        document.getElementById("tab-register").className = "btn btn-outline btn-sm";
+      } else {
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("register-form").style.display = "block";
+        document.getElementById("tab-login").className = "btn btn-outline btn-sm";
+        document.getElementById("tab-register").className = "btn btn-primary btn-sm";
+      }
+    }
+
+    async function submitLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const errBox = document.getElementById("auth-error");
+      errBox.style.display = "none";
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: selectedRole, email, password })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          localStorage.removeItem("arogyasetu_session");
+          window.location.replace("index.html");
+          return;
+        } else {
+          errBox.textContent = data.message || "Authentication failed.";
+          errBox.style.display = "block";
+          return;
+        }
+      } catch (err) {
+        errBox.textContent = "Cannot reach the MySQL backend. Start MySQL and try again.";
+        errBox.style.display = "block";
+      }
+    }
+
+    async function submitRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById("reg-name").value.trim();
+      const email = document.getElementById("reg-email").value.trim();
+      const phone = document.getElementById("reg-phone").value.trim();
+      const password = document.getElementById("reg-password").value;
+      const language = document.getElementById("login-lang").value;
+      const errBox = document.getElementById("auth-error");
+
+      try {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: selectedRole, name, email, phone, password, language })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (data.authenticated === false) {
+            toggleAuthMode("login");
+            errBox.textContent = data.message;
+            errBox.style.display = "block";
+            return;
+          }
+          localStorage.removeItem("arogyasetu_session");
+          window.location.replace("index.html");
+        } else {
+          errBox.textContent = data.message || "Registration failed.";
+          errBox.style.display = "block";
+        }
+      } catch (err) {
+        errBox.textContent = "Cannot reach the MySQL backend. Start MySQL and try again.";
+        errBox.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>

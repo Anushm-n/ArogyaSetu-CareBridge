@@ -1,0 +1,114 @@
+{
+  "users": [
+    {
+      "id": "USR-PAT-01",
+      "role": "patient",
+      "name": "Ramesh Kumar",
+      "email": "patient@arogyasetu.in",
+      "password": "patient123",
+      "phone": "+91 98450-10001",
+      "language": "kn",
+      "meta": {
+        "age": 64,
+        "bloodGroup": "O+",
+        "allergies": "Penicillin",
+        "conditions": "Type-2 Diabetes, Hypertension",
+        "location": "Siddapur, Karnataka",
+        "patientCode": "#AS-9042"
+      }
+    },
+    {
+      "id": "USR-CAR-01",
+      "role": "caretaker",
+      "name": "Ananya Kumar",
+      "email": "caretaker@arogyasetu.in",
+      "password": "caretaker123",
+      "phone": "+91 98450-11223",
+      "language": "en",
+      "meta": {
+        "relation": "Daughter",
+        "assignedPatient": "Ramesh Kumar (#AS-9042)"
+      }
+    },
+    {
+      "id": "USR-DOC-01",
+      "role": "doctor",
+      "name": "Dr. S. Hegde",
+      "email": "doctor@arogyasetu.in",
+      "password": "doctor123",
+      "phone": "+91 98450-20002",
+      "language": "en",
+      "meta": {
+        "specialty": "Cardiology & General Medicine",
+        "regNo": "KMC-48291"
+      }
+    },
+    {
+      "id": "USR-NUR-01",
+      "role": "nurse",
+      "name": "Nurse Kavita R.",
+      "email": "nurse@arogyasetu.in",
+      "password": "nurse123",
+      "phone": "+91 98450-30003",
+      "language": "kn",
+      "meta": {
+        "ward": "Home-Care & Triage Unit",
+        "licenseNo": "KNC-19384"
+      }
+    },
+    {
+      "id": "USR-HOS-01",
+      "role": "hospital",
+      "name": "District General Hospital",
+      "email": "hospital@arogyasetu.in",
+      "password": "hospital123",
+      "phone": "+91 8389-230108",
+      "language": "en",
+      "meta": {
+        "facilityCode": "HOSP-KA-31",
+        "generalBeds": 14,
+        "icuBeds": 4,
+        "ambulancesReady": 3
+      }
+    },
+    {
+      "id": "USR-ADM-01",
+      "role": "admin",
+      "name": "System Administrator",
+      "email": "admin@arogyasetu.in",
+      "password": "admin123",
+      "phone": "+91 98450-99999",
+      "language": "en",
+      "meta": {
+        "department": "State Digital Health Mission"
+      }
+    },
+    {
+      "id": "USR-VOL-01",
+      "role": "volunteer",
+      "name": "Karthik M.",
+      "email": "volunteer@arogyasetu.in",
+      "password": "volunteer123",
+      "phone": "+91 98450-40004",
+      "language": "kn",
+      "meta": {
+        "zone": "Siddapur Sector 2",
+        "distance": "1.2 km away"
+      }
+    }
+  ],
+  "medicines": [
+    { "id": 101, "name": "Metformin 500mg", "dose": "After breakfast", "time": "08:30", "status": "taken" },
+    { "id": 102, "name": "Telmisartan 40mg", "dose": "Morning BP tablet", "time": "09:00", "status": "due" },
+    { "id": 103, "name": "Atorvastatin 10mg", "dose": "After dinner", "time": "21:00", "status": "pending" }
+  ],
+  "alerts": [],
+  "vitals": [
+    { "time": "Today, 08:15 AM", "bp": "132/84 mmHg", "sugar": "122 mg/dL", "by": "Nurse Kavita R." }
+  ],
+  "sos": {
+    "active": false,
+    "timestamp": null,
+    "triggeredBy": null
+  }
+}
